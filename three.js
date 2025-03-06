@@ -7,19 +7,22 @@ import { GUI } from "GUI"
 function main() {
 
     const canvas = document.querySelector('#c');
-    const renderer = new THREE.WebGLRenderer({
+
+	const renderer = new THREE.WebGLRenderer({
 		antialias: true,
 		canvas,
+		alpha: true,
 		logarithmicDepthBuffer: true,
 	  });
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const fov = 40;
+    const fov = 75;
     const aspect = canvas.clientWidth / canvas.clientHeight;
     const near = 0.1;
     const far = 100;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 	camera.position.set( 0, 10, 20 );
+	// camera.position.z = 3;
 
 	
 	const controls = new OrbitControls( camera, canvas );
@@ -28,23 +31,29 @@ function main() {
 	controls.update();
 
 	const scene = new THREE.Scene();
-	scene.background = new THREE.Color( 'grey' );
 
     // Light should be added to the main scene if everything is rendered together
     const color = 0xFFFFFF;
-    const intensity_directional = 1;
-	const intensity_ambient = 1;
-    const light = new THREE.DirectionalLight(color, intensity_directional);
-	const light2 = new THREE.AmbientLight(color, intensity_ambient);
-    light.position.set(-1, 2, 4);
-    scene.add(light);
-	scene.add(light2)
+    const intensity_directional = 0.5;
+    const directionalLight = new THREE.DirectionalLight(color, intensity_directional);
+    directionalLight.position.set(5, 10, 7.5);
+	directionalLight.target.position.set(-5, 0, 0);
+    scene.add(directionalLight);
+	scene.add(directionalLight.target);
 
 
-    const boxWidth = 1;
-    const boxHeight = 1;
-    const boxDepth = 1;
-    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+	const color_for_ambient = 0xFFFFFF;
+	const intensity_for_ambient = 0;
+	const AmbientLight = new THREE.AmbientLight(color_for_ambient, intensity_for_ambient);
+	scene.add(AmbientLight);
+
+	const skyColor = 0xB1E1FF;  // light blue
+	const groundColor = 0xB97A20;  // brownish orange
+	const intensity = 1;
+	const skyLight = new THREE.HemisphereLight(skyColor, groundColor, intensity);
+	scene.add(skyLight);
+
+
 
 	const cubes = [];  // array for all cubes to rotate
 
@@ -55,6 +64,19 @@ function main() {
         texture.colorSpace = THREE.SRGBColorSpace;
         return texture;
     }
+
+	{
+		const loader = new THREE.TextureLoader();
+		const texture = loader.load(
+		  "rogland_clear_night_4k.jpg",
+		  () => {
+			texture.mapping = THREE.EquirectangularReflectionMapping;
+			texture.colorSpace = THREE.SRGBColorSpace;
+			scene.background = texture;
+		  });
+	  }
+
+
 
 	const up = 1;
 
@@ -159,22 +181,27 @@ function main() {
 
 	  const planeSize = 40;
 	  const loader = new THREE.TextureLoader();
-	  const texture = loader.load('checkboard.jpg');
-	  texture.wrapS = THREE.RepeatWrapping;
-	  texture.wrapT = THREE.RepeatWrapping;
-	  texture.magFilter = THREE.NearestFilter;
-	  texture.colorSpace = THREE.SRGBColorSpace;
-	  const repeats = planeSize / 2;
-	  texture.repeat.set(repeats, repeats);
-
-	  const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
-	  const planeMat = new THREE.MeshPhongMaterial({
-		map: texture,
-		side: THREE.DoubleSide,
+	  const texture = loader.load('checkboard.jpg', function(tex) {
+		tex.wrapS = THREE.RepeatWrapping;
+		tex.wrapT = THREE.RepeatWrapping;
+		tex.magFilter = THREE.NearestFilter;
+		tex.repeat.set(planeSize / 2, planeSize / 2);  // Adjusting repeats for proper tiling
 	  });
-	  const mesh = new THREE.Mesh(planeGeo, planeMat);
-	  mesh.rotation.x = Math.PI * -.5;
-	  scene.add(mesh);
+	  
+	  // Ensure the texture is fully loaded before applying it to the material
+	  texture.onload = function() {
+		const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+		const planeMat = new THREE.MeshPhongMaterial({
+		  map: texture,
+		  side: THREE.DoubleSide,
+		  transparent: true,  // Enable transparency
+		  opacity: 0.5,        // Set opacity level (0 = fully transparent, 1 = fully opaque)
+		});
+		const mesh = new THREE.Mesh(planeGeo, planeMat);
+		mesh.rotation.x = Math.PI * -.5;
+		scene.add(mesh);
+	  };
+	  
 
 	  class ColorGUIHelper {
 		constructor(object, prop) {
@@ -189,30 +216,42 @@ function main() {
 		}
 	  }
 
-	  const gui2 = new GUI();
-	  gui2.addColor(new ColorGUIHelper(light, 'color'), 'value').name('color');
-	  gui2.add(light, 'intensity', 0, 5, 0.01);
+	  const ambLightFolder = gui.addFolder("Ambient Light");
+	  ambLightFolder.add(AmbientLight, 'intensity', 0, 5, 0.01).name('Intensity_for_Ambient');
+	  ambLightFolder.addColor(new ColorGUIHelper(AmbientLight, 'color'), 'value').name('color_for_ambient');
+
+	  const dirLightFolder = gui.addFolder('Directional Light');
+	  dirLightFolder.add(directionalLight, 'intensity', 0, 5, 0.01).name('Intensity_for_Directional');
+	  dirLightFolder.addColor(new ColorGUIHelper(directionalLight, 'color'), 'value').name('color_for_directional');
+	  dirLightFolder.add(directionalLight.target.position, 'x', -10, 10);
+	  dirLightFolder.add(directionalLight.target.position, 'z', -10, 10);
+	  dirLightFolder.add(directionalLight.target.position, 'y', 0, 10);
+
+	  const skyLightFolder = gui.addFolder('Sky/Ground Light');
+	  skyLightFolder.add(skyLight, 'intensity', 0, 5, 0.01).name('Intensity_for_Sky');
+	  skyLightFolder.addColor(new ColorGUIHelper(skyLight, 'color'), 'value').name('skyColor');
+	  skyLightFolder.addColor(new ColorGUIHelper(skyLight, 'groundColor'), 'value').name('groundColor');
 
 
 	  function render(time) {
-        time *= 0.001;
-
-        if (resizeRendererToDisplaySize(renderer)) {
-            const canvas = renderer.domElement;
-            camera.aspect = canvas.clientWidth / canvas.clientHeight;
-            camera.updateProjectionMatrix();
-        }
-
-        cubes.forEach((cube, ndx) => {
-            const speed = .2 + ndx * .1;
-            const rot = time * speed;
-            cube.rotation.x = rot;
-            cube.rotation.y = rot;
-        });
-
-        renderer.render(scene, camera);
-        requestAnimationFrame(render);
-    }
+		time *= 0.001;  // Convert time to seconds
+	
+		if (resizeRendererToDisplaySize(renderer)) {
+			camera.aspect = canvas.clientWidth / canvas.clientHeight;
+			camera.updateProjectionMatrix();
+		}
+	
+		cubes.forEach((cube, ndx) => {
+			const speed = 0.2 + ndx * 0.1;
+			cube.rotation.x = time * speed;
+			cube.rotation.y = time * speed;
+		});
+	
+		renderer.render(scene, camera);
+		requestAnimationFrame(render);
+	}
+	
+	
 
     requestAnimationFrame(render);
 
