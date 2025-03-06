@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'OBJLoader';
 import { MTLLoader } from 'MTLLoader';
 import { OrbitControls } from 'OrbitControls';
-import { GUI } from "GUI"
+import { GUI } from "GUI";
 
 function main() {
 
@@ -121,29 +121,57 @@ function main() {
 
 	{
 
-		const objLoader = new OBJLoader();
-		objLoader.load("omnitrix-ben10.obj", (root) => {
+		const sonic_loaderObj = new OBJLoader();
+		sonic_loaderObj.load("Sonic_Model.obj", (root) => {
 
 		});
 
-		const mtlLoader = new MTLLoader();
-		mtlLoader.load('omnitrix-ben10.mtl', (mtl) => {
-		  mtl.preload();
-		  mtl.materials.Omnitrix_Black.side = THREE.DoubleSide;
-		  mtl.materials.Omnitrix_Core.side = THREE.DoubleSide;
-		  mtl.materials.Omnitrix_Grey.side = THREE.DoubleSide;
-		  mtl.materials.Omnitrix_Lens.side = THREE.DoubleSide;
-		  mtl.materials.Omnitrix_Lights.side = THREE.DoubleSide;
-		  mtl.materials.Omnitrix_Screen.side = THREE.DoubleSide;
-		  mtl.materials.Omnitrix_Tubes.side = THREE.DoubleSide;
-		  objLoader.setMaterials(mtl);
-		  objLoader.load('omnitrix-ben10.obj', (root) => {
-			root.position.y += 2;
-			scene.add(root);
+		const sonic_loaderMtl = new MTLLoader();
+		sonic_loaderMtl.load('Sonic_Model.mtl', (sonic_mtl) => {
+			sonic_mtl.preload();		  
+		  sonic_loaderObj.setMaterials(sonic_mtl);
+		  sonic_loaderObj.load('Sonic_Model.obj', (sonic_root) => {
+			sonic_root.position.y += 2;
+			sonic_root.position.x -=2;
+			sonic_root.rotation.y = Math.PI /2;
+			scene.add(sonic_root);
 		  });
 		});
 
 	}
+
+	// Create a torus geometry
+	const radius = 0.5; // Overall radius of the torus
+	const tubeRadius = 0.2; // Thickness of the ring
+	const radialSegments = 30; // Complexity around the radius
+	const tubularSegments = 100; // Complexity around the tube
+
+	const material = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.5, roughness: 0.4 });
+
+	// Number of rings you want to create
+	const numberOfRings = 5;
+
+	const rings = []; // Array to store the ring meshes
+
+	// Create multiple rings
+	for (let i = 0; i < numberOfRings; i++) {
+		const torusGeometry = new THREE.TorusGeometry(radius, tubeRadius, radialSegments, tubularSegments);
+		const torus = new THREE.Mesh(torusGeometry, material);
+
+		// Set position and rotation
+		torus.position.x = i * 1.5; // Adjust position to avoid overlap, incrementally positioning rings
+		torus.position.y += 3;
+		torus.rotation.y = Math.PI / 2;
+
+		// Add each torus to the scene and store in the array
+		scene.add(torus);
+		rings.push(torus);
+	}
+
+
+	
+
+
 
 
 	class MinMaxGUIHelper {
@@ -245,6 +273,12 @@ function main() {
 			const speed = 0.2 + ndx * 0.1;
 			cube.rotation.x = time * speed;
 			cube.rotation.y = time * speed;
+		});
+
+		rings.forEach((ring, ndx) => {
+			const speed = 0.2 + ndx * 0.1;
+			ring.rotation.x = time * speed;
+			ring.rotation.y = time * speed;
 		});
 	
 		renderer.render(scene, camera);
