@@ -63,23 +63,27 @@ function main() {
 	  }
 
 	
-	// Define geometry outside the loop to reuse it for all cubes
-    const boxGeometry = new THREE.BoxBufferGeometry(1, 1, 1);
-    const materials = [
-        'fire.jpg', 'gas.jpg', 'ice.jpg', 'rock.jpg', 'water.jpg', 'lightning.jpg'
-    ].map(texture => new THREE.MeshPhongMaterial({
-        map: new THREE.TextureLoader().load(texture)
-    }));
-
-    const cubes = materials.map((material, index) => {
-        const cube = new THREE.Mesh(boxGeometry, material);
-        cube.position.set(index * 2 - 5, 1.5, 0);  // Adjusted `up` directly here
-		cube.position.z += 6
-		cube.position.y += 2
-		cube.position.x += 2
-        scene.add(cube);
-        return cube;
-    });
+	
+	
+	  // Define geometry outside the loop to reuse it for all cubes
+		const boxGeometry = new THREE.BoxBufferGeometry(1, 1, 1);
+		const textures = [
+			'fire.jpg', 'gas.jpg', 'ice.jpg', 'rock.jpg', 'water.jpg', 'lightning.jpg'
+		];
+		const materials = textures.map(texture => new THREE.MeshPhongMaterial({
+			map: new THREE.TextureLoader().load(texture)
+		}));
+		
+		const cubeGroup = new THREE.Group();
+		materials.forEach((material, index) => {
+			const cube = new THREE.Mesh(boxGeometry, material);
+			cube.position.set(index * 2 - 5 + 2, 3.5, 6);  // Adjusted all position calculations here
+			cubeGroup.add(cube);
+		});
+		
+		scene.add(cubeGroup);
+		
+	
 
 
 
@@ -141,25 +145,6 @@ function main() {
 		silver_loaderMtl.load('silverCyclesDist.mtl', (silver_mtl) => { // Corrected to the matching MTL file
 			silver_mtl.preload(); // Ensure materials are ready before applying them
 		
-			// Set the side property of materials to be double-sided, if applicable
-			if (silver_mtl.materials.Ears) silver_mtl.materials.Ears.side = THREE.DoubleSide;
-			if (silver_mtl.materials.Eyeballs) silver_mtl.materials.Eyeballs.side = THREE.DoubleSide;
-			if (silver_mtl.materials.Eyeliner_side) silver_mtl.materials.Eyeliner_side.side = THREE.DoubleSide;
-			if (silver_mtl.materials.Fur) silver_mtl.materials.Fur.side = THREE.DoubleSide;
-			if (silver_mtl.materials.GlowStuff) silver_mtl.materials.GlowStuff.side = THREE.DoubleSide;
-			if (silver_mtl.materials.Invisible) silver_mtl.materials.Invisible.side = THREE.DoubleSide;
-			if (silver_mtl.materials.Hands) silver_mtl.materials.Hands.side = THREE.DoubleSide;
-			if (silver_mtl.materials.Mouth) silver_mtl.materials.Mouth.side = THREE.DoubleSide;
-			if (silver_mtl.materials.Nose) silver_mtl.materials.Nose.side = THREE.DoubleSide;
-			if (silver_mtl.materials.Rings) silver_mtl.materials.Rings.side = THREE.DoubleSide;
-			if (silver_mtl.materials.Teeth) silver_mtl.materials.Teeth.side = THREE.DoubleSide;
-			if (silver_mtl.materials.shoe_black) silver_mtl.materials.shoe_black.side = THREE.DoubleSide;
-			if (silver_mtl.materials.shoe_tips) silver_mtl.materials.shoe_tips.side = THREE.DoubleSide;
-			if (silver_mtl.materials.shoe_white) silver_mtl.materials.shoe_white.side = THREE.DoubleSide;
-			if (silver_mtl.materials.shou_ruby) silver_mtl.materials.shou_ruby.side = THREE.DoubleSide;
-			if (silver_mtl.materials.skin) silver_mtl.materials.skin.side = THREE.DoubleSide;
-			if (silver_mtl.materials.soles) silver_mtl.materials.soles.side = THREE.DoubleSide;
-		
 			// Use the prepared materials to load the model
 			silver_loaderObj.setMaterials(silver_mtl);
 			silver_loaderObj.load('silverCyclesDist.obj', (silver_root) => {
@@ -195,18 +180,18 @@ function main() {
 	// Create multiple rings
 	for (let i = 0; i < numberOfRings; i++) {
 		const torusGeometry = new THREE.TorusGeometry(radius, tubeRadius, radialSegments, tubularSegments);
-		const torus = new THREE.Mesh(torusGeometry, material);
-
-		// Set position and rotation
-		torus.position.x = i * 1.5; // Adjust position to avoid overlap, incrementally positioning rings
+		// Create a new material instance for each ring
+		const torusMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.5, roughness: 0.4 });
+		const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+	
+		torus.position.x = i * 1.5 - 3;
 		torus.position.y += 3;
-		torus.position.x -= 3;
 		torus.rotation.y = Math.PI / 2;
-
-		// Add each torus to the scene and store in the array
+	
 		scene.add(torus);
 		rings.push(torus);
 	}
+	
 
 	
 
@@ -220,27 +205,22 @@ function main() {
 
 		// Create multiple emeralds
 		for (let i = 0; i < numberOfEmeralds; i++) {
-			// Using OctahedronGeometry for a simple, gem-like shape
-			const emeraldGeometry = new THREE.OctahedronGeometry(0.5, 0); // Second parameter is detail level
-			emeraldGeometry.scale(1, 1.5, 1); // Scale geometry to make the emeralds elongated
-
-			const emerald = new THREE.Mesh(emeraldGeometry, emerald_material);
-
-			// Set position and rotation
-			emerald.position.x = i * 1.5 - 3; // Adjust position to avoid overlap, incrementally positioning emeralds
+			const emeraldGeometry = new THREE.OctahedronGeometry(0.5, 0);
+			emeraldGeometry.scale(1, 1.5, 1);
+			// Create a new material instance for each emerald
+			const emeraldMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00, metalness: 0.5, roughness: 0.25 });
+			const emerald = new THREE.Mesh(emeraldGeometry, emeraldMaterial);
+		
+			emerald.position.x = i * 1.5 - 3;
 			emerald.position.y += 3;
 			emerald.position.z -= 6;
-
-			// Optionally adjust rotation to make the emeralds face interesting directions
 			emerald.rotation.x = Math.PI / 4;
 			emerald.rotation.y = Math.PI / 6;
-
-			// Add each emerald to the scene and store in the array
+		
 			scene.add(emerald);
 			emeralds.push(emerald);
+		}
 		
-
-	}
 
 
 	
@@ -334,6 +314,80 @@ function main() {
 	  skyLightFolder.addColor(new ColorGUIHelper(skyLight, 'color'), 'value').name('skyColor');
 	  skyLightFolder.addColor(new ColorGUIHelper(skyLight, 'groundColor'), 'value').name('groundColor');
 
+	  class PickHelper {
+		constructor() {
+		  this.raycaster = new THREE.Raycaster();
+		  this.pickedObject = null;
+		  this.pickedObjectSavedColor = 0;
+		}
+		pick(normalizedPosition, scene, camera, time) {
+		  // restore the color if there is a picked object
+		  if (this.pickedObject) {
+			this.pickedObject.material.emissive.setHex(this.pickedObjectSavedColor);
+			this.pickedObject = undefined;
+		  }
+	   
+		  // cast a ray through the frustum
+		  this.raycaster.setFromCamera(normalizedPosition, camera);
+		  // get the list of objects the ray intersected
+		  const intersectedObjects = this.raycaster.intersectObjects(scene.children);
+		  if (intersectedObjects.length) {
+			// pick the first object. It's the closest one
+			this.pickedObject = intersectedObjects[0].object;
+			// save its color
+			this.pickedObjectSavedColor = this.pickedObject.material.emissive.getHex();
+			// set its emissive color to flashing red/yellow
+			this.pickedObject.material.emissive.setHex((time * 8) % 2 > 1 ? 0xFFFF00 : 0xFF0000);
+		  }
+		}
+	  }
+
+	  	const pickPosition = {x: 0, y: 0};
+		clearPickPosition();
+		
+		
+		function getCanvasRelativePosition(event) {
+		const rect = canvas.getBoundingClientRect();
+		return {
+			x: (event.clientX - rect.left) * canvas.width  / rect.width,
+			y: (event.clientY - rect.top ) * canvas.height / rect.height,
+		};
+		}
+		
+		function setPickPosition(event) {
+		const pos = getCanvasRelativePosition(event);
+		pickPosition.x = (pos.x / canvas.width ) *  2 - 1;
+		pickPosition.y = (pos.y / canvas.height) * -2 + 1;  // note we flip Y
+		}
+		
+		function clearPickPosition() {
+		// unlike the mouse which always has a position
+		// if the user stops touching the screen we want
+		// to stop picking. For now we just pick a value
+		// unlikely to pick something
+		pickPosition.x = -100000;
+		pickPosition.y = -100000;
+		}
+		
+		window.addEventListener('mousemove', setPickPosition);
+		window.addEventListener('mouseout', clearPickPosition);
+		window.addEventListener('mouseleave', clearPickPosition);
+
+		window.addEventListener('touchstart', (event) => {
+			// prevent the window from scrolling
+			event.preventDefault();
+			setPickPosition(event.touches[0]);
+		  }, {passive: false});
+		   
+		  window.addEventListener('touchmove', (event) => {
+			setPickPosition(event.touches[0]);
+		  });
+		   
+		  window.addEventListener('touchend', clearPickPosition);
+
+
+
+	  const pickHelper = new PickHelper();
 
 	  function render(time) {
 		stats.begin();
@@ -344,7 +398,7 @@ function main() {
 			camera.updateProjectionMatrix();
 		}
 	
-		cubes.forEach((cube, ndx) => {
+		cubeGroup.children.forEach((cube, ndx) => {
 			const speed = 0.2 + ndx * 0.1;
 			cube.rotation.x = time * speed;
 			cube.rotation.y = time * speed;
@@ -362,6 +416,7 @@ function main() {
 			emerald.rotation.y = time * speed;
 		});
 	
+		pickHelper.pick(pickPosition, scene, camera, time);
 		renderer.render(scene, camera);
 		stats.end();
 		requestAnimationFrame(render);
