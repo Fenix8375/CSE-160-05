@@ -16,7 +16,7 @@ function main() {
 	  });
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const fov = 75;
+    const fov = 50;
     const aspect = canvas.clientWidth / canvas.clientHeight;
     const near = 0.1;
     const far = 100;
@@ -139,6 +139,86 @@ function main() {
 		});
 
 	}
+
+	{
+		const shadow_loaderObj = new OBJLoader();
+
+		const shadow_loaderMtl = new MTLLoader();
+		shadow_loaderMtl.load('shadow.mtl', (shadow_mtl) => {
+			shadow_mtl.preload(); // Ensure materials are ready before applying them
+			
+			// Setting materials to double-sided where applicable
+			if (shadow_mtl.materials.Eyeballs) shadow_mtl.materials.Eyeballs.side = THREE.DoubleSide;
+			if (shadow_mtl.materials.Fur) shadow_mtl.materials.Fur.side = THREE.DoubleSide;
+			if (shadow_mtl.materials.Material) shadow_mtl.materials.Material.side = THREE.DoubleSide;
+			if (shadow_mtl.materials["Material.002"]) shadow_mtl.materials["Material.002"].side = THREE.DoubleSide;
+			if (shadow_mtl.materials["Material.003"]) shadow_mtl.materials["Material.003"].side = THREE.DoubleSide;
+			if (shadow_mtl.materials["Material.004"]) shadow_mtl.materials["Material.004"].side = THREE.DoubleSide;
+			if (shadow_mtl.materials["Material.005"]) shadow_mtl.materials["Material.005"].side = THREE.DoubleSide;
+			if (shadow_mtl.materials["Material.009"]) shadow_mtl.materials["Material.009"].side = THREE.DoubleSide;
+			if (shadow_mtl.materials["Material.010"]) shadow_mtl.materials["Material.010"].side = THREE.DoubleSide;
+			if (shadow_mtl.materials.Mouth) shadow_mtl.materials.Mouth.side = THREE.DoubleSide;
+			if (shadow_mtl.materials.Shadow_body) shadow_mtl.materials.Shadow_body.side = THREE.DoubleSide;
+			if (shadow_mtl.materials.Teeth) shadow_mtl.materials.Teeth.side = THREE.DoubleSide;
+			if (shadow_mtl.materials.rings) shadow_mtl.materials.rings.side = THREE.DoubleSide;
+		
+			// Use the prepared materials to load the model
+			shadow_loaderObj.setMaterials(shadow_mtl);
+			shadow_loaderObj.load('shadow.obj', (shadow_root) => {
+				shadow_root.position.set(-6, 2, -6); // Adjust position as needed
+				shadow_root.scale.set(0.2, 0.2, 0.2); // Scale down the model
+				scene.add(shadow_root); // Add to the scene
+			});
+		});
+		
+
+	}
+
+	{
+
+		const silver_loaderObj = new OBJLoader();
+
+		const silver_loaderMtl = new MTLLoader();
+		silver_loaderMtl.load('silverCyclesDist.mtl', (silver_mtl) => { // Corrected to the matching MTL file
+			silver_mtl.preload(); // Ensure materials are ready before applying them
+		
+			// Set the side property of materials to be double-sided, if applicable
+			if (silver_mtl.materials.Ears) silver_mtl.materials.Ears.side = THREE.DoubleSide;
+			if (silver_mtl.materials.Eyeballs) silver_mtl.materials.Eyeballs.side = THREE.DoubleSide;
+			if (silver_mtl.materials.Eyeliner_side) silver_mtl.materials.Eyeliner_side.side = THREE.DoubleSide;
+			if (silver_mtl.materials.Fur) silver_mtl.materials.Fur.side = THREE.DoubleSide;
+			if (silver_mtl.materials.GlowStuff) silver_mtl.materials.GlowStuff.side = THREE.DoubleSide;
+			if (silver_mtl.materials.Invisible) silver_mtl.materials.Invisible.side = THREE.DoubleSide;
+			if (silver_mtl.materials.Hands) silver_mtl.materials.Hands.side = THREE.DoubleSide;
+			if (silver_mtl.materials.Mouth) silver_mtl.materials.Mouth.side = THREE.DoubleSide;
+			if (silver_mtl.materials.Nose) silver_mtl.materials.Nose.side = THREE.DoubleSide;
+			if (silver_mtl.materials.Rings) silver_mtl.materials.Rings.side = THREE.DoubleSide;
+			if (silver_mtl.materials.Teeth) silver_mtl.materials.Teeth.side = THREE.DoubleSide;
+			if (silver_mtl.materials.shoe_black) silver_mtl.materials.shoe_black.side = THREE.DoubleSide;
+			if (silver_mtl.materials.shoe_tips) silver_mtl.materials.shoe_tips.side = THREE.DoubleSide;
+			if (silver_mtl.materials.shoe_white) silver_mtl.materials.shoe_white.side = THREE.DoubleSide;
+			if (silver_mtl.materials.shou_ruby) silver_mtl.materials.shou_ruby.side = THREE.DoubleSide;
+			if (silver_mtl.materials.skin) silver_mtl.materials.skin.side = THREE.DoubleSide;
+			if (silver_mtl.materials.soles) silver_mtl.materials.soles.side = THREE.DoubleSide;
+		
+			// Use the prepared materials to load the model
+			silver_loaderObj.setMaterials(silver_mtl);
+			silver_loaderObj.load('silverCyclesDist.obj', (silver_root) => {
+				silver_root.position.set(-4, 2, 6); // Adjust position as needed
+				silver_root.scale.set(0.2, 0.2, 0.2); // Scale down the model
+				silver_root.rotation.y = Math.PI /2;
+				scene.add(silver_root); // Add to the scene
+			});
+		});
+		
+
+	}
+
+	
+
+
+
+
 
 	// Create a torus geometry
 	const radius = 0.5; // Overall radius of the torus
