@@ -3,6 +3,7 @@ import { OBJLoader } from 'OBJLoader';
 import { MTLLoader } from 'MTLLoader';
 import { OrbitControls } from 'OrbitControls';
 import { GUI } from "GUI";
+import Stats from "https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js";
 
 function main() {
 
@@ -10,11 +11,15 @@ function main() {
 
 	const renderer = new THREE.WebGLRenderer({
 		antialias: true,
-		canvas,
+		canvas: canvas,
 		alpha: true,
 		logarithmicDepthBuffer: true,
 	  });
 	renderer.setSize(window.innerWidth, window.innerHeight);
+
+	const stats = new Stats();
+    stats.showPanel(0);
+    document.body.appendChild(stats.dom);
 
     const fov = 50;
     const aspect = canvas.clientWidth / canvas.clientHeight;
@@ -32,38 +37,19 @@ function main() {
 
 	const scene = new THREE.Scene();
 
-    // Light should be added to the main scene if everything is rendered together
-    const color = 0xFFFFFF;
-    const intensity_directional = 0.5;
-    const directionalLight = new THREE.DirectionalLight(color, intensity_directional);
-    directionalLight.position.set(5, 10, 7.5);
-	directionalLight.target.position.set(-5, 0, 0);
-    scene.add(directionalLight);
-	scene.add(directionalLight.target);
-
-
-	const color_for_ambient = 0xFFFFFF;
-	const intensity_for_ambient = 0;
-	const AmbientLight = new THREE.AmbientLight(color_for_ambient, intensity_for_ambient);
+	const AmbientLight  = new THREE.AmbientLight(0xffffff, 0.5);
 	scene.add(AmbientLight);
+	
+	const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+	directionalLight.position.set(5, 10, 7.5);
+	scene.add(directionalLight);
+	
 
 	const skyColor = 0xB1E1FF;  // light blue
 	const groundColor = 0xB97A20;  // brownish orange
 	const intensity = 1;
 	const skyLight = new THREE.HemisphereLight(skyColor, groundColor, intensity);
 	scene.add(skyLight);
-
-
-
-	const cubes = [];  // array for all cubes to rotate
-
-    // Load textures and apply to materials
-    function loadColorTexture(path) {
-        const loader = new THREE.TextureLoader();
-        const texture = loader.load(path);
-        texture.colorSpace = THREE.SRGBColorSpace;
-        return texture;
-    }
 
 	{
 		const loader = new THREE.TextureLoader();
@@ -76,44 +62,35 @@ function main() {
 		  });
 	  }
 
-
-
-	const up = 1;
-
-    // Using one texture per cube example
-    const textures = [
+	
+	// Define geometry outside the loop to reuse it for all cubes
+    const boxGeometry = new THREE.BoxBufferGeometry(1, 1, 1);
+    const materials = [
         'fire.jpg', 'gas.jpg', 'ice.jpg', 'rock.jpg', 'water.jpg', 'lightning.jpg'
-    ].map(loadColorTexture);
+    ].map(texture => new THREE.MeshPhongMaterial({
+        map: new THREE.TextureLoader().load(texture)
+    }));
 
-	textures.forEach((texture, index) => {
-		// Create material with texture
-		const material = new THREE.MeshPhongMaterial({ map: texture });
+    const cubes = materials.map((material, index) => {
+        const cube = new THREE.Mesh(boxGeometry, material);
+        cube.position.set(index * 2 - 5, 1.5, 0);  // Adjusted `up` directly here
+		cube.position.z += 6
+		cube.position.y += 2
+		cube.position.x += 2
+        scene.add(cube);
+        return cube;
+    });
 
-		// Geometry for the cube
-		const cubeSize = 1; // Define the size of the cube
-		const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-
-		// Create a cube mesh with the geometry and textured material
-		const cube = new THREE.Mesh(cubeGeo, material);
-
-		// Position each cube so they do not overlap
-		cube.position.set(index * 2 - 5, cubeSize / 2 + up, 0);
-
-		// Add the cube to the scene
-		scene.add(cube);
-
-		// Optionally, keep track of the cubes if needed later
-		cubes.push(cube);
-	});
 
 
     function resizeRendererToDisplaySize(renderer) {
-        const canvas = renderer.domElement;
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
-        const needResize = canvas.width !== width || canvas.height !== height;
+        const needResize = renderer.domElement.width !== width || renderer.domElement.height !== height;
         if (needResize) {
             renderer.setSize(width, height, false);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
         }
         return needResize;
     }
@@ -122,21 +99,19 @@ function main() {
 	{
 
 		const sonic_loaderObj = new OBJLoader();
-		sonic_loaderObj.load("Sonic_Model.obj", (root) => {
-
-		});
 
 		const sonic_loaderMtl = new MTLLoader();
 		sonic_loaderMtl.load('Sonic_Model.mtl', (sonic_mtl) => {
-			sonic_mtl.preload();		  
-		  sonic_loaderObj.setMaterials(sonic_mtl);
-		  sonic_loaderObj.load('Sonic_Model.obj', (sonic_root) => {
-			sonic_root.position.y += 2;
-			sonic_root.position.x -=2;
-			sonic_root.rotation.y = Math.PI /2;
-			scene.add(sonic_root);
-		  });
+			sonic_mtl.preload(); // Ensure materials are ready before applying them		
+			// Use the prepared materials to load the model
+			sonic_loaderObj.setMaterials(sonic_mtl);
+			sonic_loaderObj.load('Sonic_Model.obj', (sonic_root) => {
+				sonic_root.position.set(-5, 2, 0); // Adjust position as needed
+				sonic_root.rotation.y = Math.PI / 2; // Rotate to face the side
+				scene.add(sonic_root); // Add to the scene
+			});
 		});
+		
 
 	}
 
@@ -146,22 +121,6 @@ function main() {
 		const shadow_loaderMtl = new MTLLoader();
 		shadow_loaderMtl.load('shadow.mtl', (shadow_mtl) => {
 			shadow_mtl.preload(); // Ensure materials are ready before applying them
-			
-			// Setting materials to double-sided where applicable
-			if (shadow_mtl.materials.Eyeballs) shadow_mtl.materials.Eyeballs.side = THREE.DoubleSide;
-			if (shadow_mtl.materials.Fur) shadow_mtl.materials.Fur.side = THREE.DoubleSide;
-			if (shadow_mtl.materials.Material) shadow_mtl.materials.Material.side = THREE.DoubleSide;
-			if (shadow_mtl.materials["Material.002"]) shadow_mtl.materials["Material.002"].side = THREE.DoubleSide;
-			if (shadow_mtl.materials["Material.003"]) shadow_mtl.materials["Material.003"].side = THREE.DoubleSide;
-			if (shadow_mtl.materials["Material.004"]) shadow_mtl.materials["Material.004"].side = THREE.DoubleSide;
-			if (shadow_mtl.materials["Material.005"]) shadow_mtl.materials["Material.005"].side = THREE.DoubleSide;
-			if (shadow_mtl.materials["Material.009"]) shadow_mtl.materials["Material.009"].side = THREE.DoubleSide;
-			if (shadow_mtl.materials["Material.010"]) shadow_mtl.materials["Material.010"].side = THREE.DoubleSide;
-			if (shadow_mtl.materials.Mouth) shadow_mtl.materials.Mouth.side = THREE.DoubleSide;
-			if (shadow_mtl.materials.Shadow_body) shadow_mtl.materials.Shadow_body.side = THREE.DoubleSide;
-			if (shadow_mtl.materials.Teeth) shadow_mtl.materials.Teeth.side = THREE.DoubleSide;
-			if (shadow_mtl.materials.rings) shadow_mtl.materials.rings.side = THREE.DoubleSide;
-		
 			// Use the prepared materials to load the model
 			shadow_loaderObj.setMaterials(shadow_mtl);
 			shadow_loaderObj.load('shadow.obj', (shadow_root) => {
@@ -204,7 +163,7 @@ function main() {
 			// Use the prepared materials to load the model
 			silver_loaderObj.setMaterials(silver_mtl);
 			silver_loaderObj.load('silverCyclesDist.obj', (silver_root) => {
-				silver_root.position.set(-4, 2, 6); // Adjust position as needed
+				silver_root.position.set(-4.5, 2.7, 6); // Adjust position as needed
 				silver_root.scale.set(0.2, 0.2, 0.2); // Scale down the model
 				silver_root.rotation.y = Math.PI /2;
 				scene.add(silver_root); // Add to the scene
@@ -229,7 +188,7 @@ function main() {
 	const material = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.5, roughness: 0.4 });
 
 	// Number of rings you want to create
-	const numberOfRings = 5;
+	const numberOfRings = 7;
 
 	const rings = []; // Array to store the ring meshes
 
@@ -241,11 +200,46 @@ function main() {
 		// Set position and rotation
 		torus.position.x = i * 1.5; // Adjust position to avoid overlap, incrementally positioning rings
 		torus.position.y += 3;
+		torus.position.x -= 3;
 		torus.rotation.y = Math.PI / 2;
 
 		// Add each torus to the scene and store in the array
 		scene.add(torus);
 		rings.push(torus);
+	}
+
+	
+
+			// Material for the emeralds
+		const emerald_material = new THREE.MeshStandardMaterial({ color: 0x00ff00, metalness: 0.5, roughness: 0.25 });
+
+		// Number of emeralds you want to create
+		const numberOfEmeralds = 7;
+
+		const emeralds = []; // Array to store the emerald meshes
+
+		// Create multiple emeralds
+		for (let i = 0; i < numberOfEmeralds; i++) {
+			// Using OctahedronGeometry for a simple, gem-like shape
+			const emeraldGeometry = new THREE.OctahedronGeometry(0.5, 0); // Second parameter is detail level
+			emeraldGeometry.scale(1, 1.5, 1); // Scale geometry to make the emeralds elongated
+
+			const emerald = new THREE.Mesh(emeraldGeometry, emerald_material);
+
+			// Set position and rotation
+			emerald.position.x = i * 1.5 - 3; // Adjust position to avoid overlap, incrementally positioning emeralds
+			emerald.position.y += 3;
+			emerald.position.z -= 6;
+
+			// Optionally adjust rotation to make the emeralds face interesting directions
+			emerald.rotation.x = Math.PI / 4;
+			emerald.rotation.y = Math.PI / 6;
+
+			// Add each emerald to the scene and store in the array
+			scene.add(emerald);
+			emeralds.push(emerald);
+		
+
 	}
 
 
@@ -342,7 +336,8 @@ function main() {
 
 
 	  function render(time) {
-		time *= 0.001;  // Convert time to seconds
+		stats.begin();
+		time *= 0.001;
 	
 		if (resizeRendererToDisplaySize(renderer)) {
 			camera.aspect = canvas.clientWidth / canvas.clientHeight;
@@ -354,16 +349,24 @@ function main() {
 			cube.rotation.x = time * speed;
 			cube.rotation.y = time * speed;
 		});
-
+	
 		rings.forEach((ring, ndx) => {
 			const speed = 0.2 + ndx * 0.1;
 			ring.rotation.x = time * speed;
 			ring.rotation.y = time * speed;
 		});
+
+		emeralds.forEach((emerald, ndx) => {
+			const speed = 0.2 + ndx * 0.1;
+			emerald.rotation.x = time * speed;
+			emerald.rotation.y = time * speed;
+		});
 	
 		renderer.render(scene, camera);
+		stats.end();
 		requestAnimationFrame(render);
 	}
+	
 	
 	
 
