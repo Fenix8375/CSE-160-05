@@ -170,8 +170,6 @@ function main() {
 	const radialSegments = 30; // Complexity around the radius
 	const tubularSegments = 100; // Complexity around the tube
 
-	const material = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.5, roughness: 0.4 });
-
 	// Number of rings you want to create
 	const numberOfRings = 7;
 
