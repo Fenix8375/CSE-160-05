@@ -66,23 +66,25 @@ function main() {
 	
 	
 	  // Define geometry outside the loop to reuse it for all cubes
-		const boxGeometry = new THREE.BoxBufferGeometry(1, 1, 1);
-		const textures = [
-			'fire.jpg', 'gas.jpg', 'ice.jpg', 'rock.jpg', 'water.jpg', 'lightning.jpg'
-		];
-		const materials = textures.map(texture => new THREE.MeshPhongMaterial({
-			map: new THREE.TextureLoader().load(texture)
-		}));
+	const boxGeometry = new THREE.BoxBufferGeometry(1, 1, 1);
+	const textures = [
+		'fire.jpg', 'gas.jpg', 'ice.jpg', 'rock.jpg', 'water.jpg', 'lightning.jpg'
+	];
+	const materials = textures.map(texture => new THREE.MeshPhongMaterial({
+		map: new THREE.TextureLoader().load(texture)
+	}));
 		
-		const cubeGroup = new THREE.Group();
-		materials.forEach((material, index) => {
-			const cube = new THREE.Mesh(boxGeometry, material);
-			cube.position.set(index * 2 - 5 + 2, 3.5, 6);  // Adjusted all position calculations here
-			cubeGroup.add(cube);
-		});
+	const cubeGroup = new THREE.Group();
+	materials.forEach((material, index) => {
+		const cube = new THREE.Mesh(boxGeometry, material);
+		cube.position.set(index * 2 - 5 + 2, 3.5, 6);  // Adjusted all position calculations here
+		cubeGroup.add(cube);
+	});
 		
-		scene.add(cubeGroup);
-		
+	scene.add(cubeGroup);
+
+
+
 	
 
 
@@ -193,7 +195,7 @@ function main() {
 
 	
 
-			// Material for the emeralds
+		// Material for the emeralds
 		const emerald_material = new THREE.MeshStandardMaterial({ color: 0x00ff00, metalness: 0.5, roughness: 0.25 });
 
 		// Number of emeralds you want to create
@@ -311,6 +313,59 @@ function main() {
 	  skyLightFolder.add(skyLight, 'intensity', 0, 5, 0.01).name('Intensity_for_Sky');
 	  skyLightFolder.addColor(new ColorGUIHelper(skyLight, 'color'), 'value').name('skyColor');
 	  skyLightFolder.addColor(new ColorGUIHelper(skyLight, 'groundColor'), 'value').name('groundColor');
+
+	  class FogGUIHelper {
+		constructor(fog, backgroundColor) {
+		  this.fog = fog;
+		  this.backgroundColor = backgroundColor;
+		}
+		get near() {
+		  return this.fog.near;
+		}
+		set near(v) {
+		  this.fog.near = v;
+		  this.fog.far = Math.max(this.fog.far, v);
+		  updateMaterials();
+		}
+		get far() {
+		  return this.fog.far;
+		}
+		set far(v) {
+		  this.fog.far = v;
+		  this.fog.near = Math.min(this.fog.near, v);
+		  updateMaterials();
+		}
+		get color() {
+		  return `#${this.fog.color.getHexString()}`;
+		}
+		set color(hexString) {
+		  this.fog.color.set(hexString);
+		  this.backgroundColor.set(hexString);
+		  updateMaterials();
+		}
+	}
+	
+	function updateMaterials() {
+		scene.traverse(function(object) {
+			if (object.material) {
+				object.material.needsUpdate = true; // Force update of materials if needed
+			}
+		});
+	}
+	
+	{
+		const near = 4;
+		const far = 54; // Adjust based on the size of your scene
+		const color = 'lightblue';
+		scene.fog = new THREE.Fog(color, near, far);
+		scene.background = new THREE.Color(color);
+		
+		const fogGUIHelper = new FogGUIHelper(scene.fog, scene.background);
+		const fogFolder = gui.addFolder("Fog");
+		fogFolder.add(fogGUIHelper, 'near', 0, 20).listen();
+		fogFolder.add(fogGUIHelper, 'far', 0, 60).listen();
+		fogFolder.addColor(fogGUIHelper, 'color');
+	}
 
 	  class PickHelper {
 		constructor() {
