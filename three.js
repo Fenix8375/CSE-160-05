@@ -15,7 +15,7 @@ function main() {
 		alpha: true,
 		logarithmicDepthBuffer: true,
 	  });
-	renderer.setSize(window.innerWidth, window.innerHeight);
+	renderer.setSize(600, 600);
 
 	const stats = new Stats();
     stats.showPanel(0);
@@ -26,8 +26,7 @@ function main() {
     const near = 0.1;
     const far = 100;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-	camera.position.set( 0, 10, 20 );
-	// camera.position.z = 3;
+	camera.position.set( 5, 10, 20 );
 
 	
 	const controls = new OrbitControls( camera, canvas );
@@ -45,8 +44,8 @@ function main() {
 	scene.add(directionalLight);
 	
 
-	const skyColor = 0xB1E1FF;  // light blue
-	const groundColor = 0xB97A20;  // brownish orange
+	const skyColor = 0xB1E1FF;
+	const groundColor = 0xB97A20;
 	const intensity = 1;
 	const skyLight = new THREE.HemisphereLight(skyColor, groundColor, intensity);
 	scene.add(skyLight);
@@ -62,10 +61,6 @@ function main() {
 		  });
 	  }
 
-	
-	
-	
-	  // Define geometry outside the loop to reuse it for all cubes
 	const boxGeometry = new THREE.BoxBufferGeometry(1, 1, 1);
 	const textures = [
 		'fire.jpg', 'gas.jpg', 'ice.jpg', 'rock.jpg', 'water.jpg', 'lightning.jpg'
@@ -77,17 +72,11 @@ function main() {
 	const cubeGroup = new THREE.Group();
 	materials.forEach((material, index) => {
 		const cube = new THREE.Mesh(boxGeometry, material);
-		cube.position.set(index * 2 - 5 + 2, 3.5, 6);  // Adjusted all position calculations here
+		cube.position.set(index * 2 - 5 + 2, 3.5, 6);
 		cubeGroup.add(cube);
 	});
 		
 	scene.add(cubeGroup);
-
-
-
-	
-
-
 
     function resizeRendererToDisplaySize(renderer) {
         const width = canvas.clientWidth;
@@ -108,13 +97,12 @@ function main() {
 
 		const sonic_loaderMtl = new MTLLoader();
 		sonic_loaderMtl.load('Sonic_Model.mtl', (sonic_mtl) => {
-			sonic_mtl.preload(); // Ensure materials are ready before applying them		
-			// Use the prepared materials to load the model
+			sonic_mtl.preload();
 			sonic_loaderObj.setMaterials(sonic_mtl);
 			sonic_loaderObj.load('Sonic_Model.obj', (sonic_root) => {
-				sonic_root.position.set(-5, 2, 0); // Adjust position as needed
-				sonic_root.rotation.y = Math.PI / 2; // Rotate to face the side
-				scene.add(sonic_root); // Add to the scene
+				sonic_root.position.set(-5, 2, 0);
+				sonic_root.rotation.y = Math.PI / 2;
+				scene.add(sonic_root);
 			});
 		});
 		
@@ -126,13 +114,12 @@ function main() {
 
 		const shadow_loaderMtl = new MTLLoader();
 		shadow_loaderMtl.load('shadow.mtl', (shadow_mtl) => {
-			shadow_mtl.preload(); // Ensure materials are ready before applying them
-			// Use the prepared materials to load the model
+			shadow_mtl.preload();
 			shadow_loaderObj.setMaterials(shadow_mtl);
 			shadow_loaderObj.load('shadow.obj', (shadow_root) => {
-				shadow_root.position.set(-6, 2, -6); // Adjust position as needed
-				shadow_root.scale.set(0.2, 0.2, 0.2); // Scale down the model
-				scene.add(shadow_root); // Add to the scene
+				shadow_root.position.set(-6, 2, -6);
+				shadow_root.scale.set(0.2, 0.2, 0.2);
+				scene.add(shadow_root);
 			});
 		});
 		
@@ -144,43 +131,32 @@ function main() {
 		const silver_loaderObj = new OBJLoader();
 
 		const silver_loaderMtl = new MTLLoader();
-		silver_loaderMtl.load('silverCyclesDist.mtl', (silver_mtl) => { // Corrected to the matching MTL file
-			silver_mtl.preload(); // Ensure materials are ready before applying them
-		
-			// Use the prepared materials to load the model
+		silver_loaderMtl.load('silverCyclesDist.mtl', (silver_mtl) => {
+			silver_mtl.preload();
 			silver_loaderObj.setMaterials(silver_mtl);
 			silver_loaderObj.load('silverCyclesDist.obj', (silver_root) => {
-				silver_root.position.set(-4.5, 2.7, 6); // Adjust position as needed
-				silver_root.scale.set(0.2, 0.2, 0.2); // Scale down the model
+				silver_root.position.set(-4.5, 2.7, 6);
+				silver_root.scale.set(0.2, 0.2, 0.2);
 				silver_root.rotation.y = Math.PI /2;
-				scene.add(silver_root); // Add to the scene
+				scene.add(silver_root);
 			});
 		});
 		
 
 	}
 
-	
-
-
-
-
-
-	// Create a torus geometry
+	//Making Rings
 	const radius = 0.5; // Overall radius of the torus
 	const tubeRadius = 0.2; // Thickness of the ring
 	const radialSegments = 30; // Complexity around the radius
 	const tubularSegments = 100; // Complexity around the tube
 
-	// Number of rings you want to create
 	const numberOfRings = 7;
 
-	const rings = []; // Array to store the ring meshes
+	const rings = [];
 
-	// Create multiple rings
 	for (let i = 0; i < numberOfRings; i++) {
 		const torusGeometry = new THREE.TorusGeometry(radius, tubeRadius, radialSegments, tubularSegments);
-		// Create a new material instance for each ring
 		const torusMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.5, roughness: 0.4 });
 		const torus = new THREE.Mesh(torusGeometry, torusMaterial);
 	
@@ -191,23 +167,13 @@ function main() {
 		scene.add(torus);
 		rings.push(torus);
 	}
-	
 
-	
-
-		// Material for the emeralds
-		const emerald_material = new THREE.MeshStandardMaterial({ color: 0x00ff00, metalness: 0.5, roughness: 0.25 });
-
-		// Number of emeralds you want to create
 		const numberOfEmeralds = 7;
 
-		const emeralds = []; // Array to store the emerald meshes
-
-		// Create multiple emeralds
+		const emeralds = [];
 		for (let i = 0; i < numberOfEmeralds; i++) {
 			const emeraldGeometry = new THREE.OctahedronGeometry(0.5, 0);
 			emeraldGeometry.scale(1, 1.5, 1);
-			// Create a new material instance for each emerald
 			const emeraldMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00, metalness: 0.5, roughness: 0.25 });
 			const emerald = new THREE.Mesh(emeraldGeometry, emeraldMaterial);
 		
@@ -220,12 +186,6 @@ function main() {
 			scene.add(emerald);
 			emeralds.push(emerald);
 		}
-		
-
-
-	
-
-
 
 
 	class MinMaxGUIHelper {
@@ -267,17 +227,16 @@ function main() {
 		tex.wrapS = THREE.RepeatWrapping;
 		tex.wrapT = THREE.RepeatWrapping;
 		tex.magFilter = THREE.NearestFilter;
-		tex.repeat.set(planeSize / 2, planeSize / 2);  // Adjusting repeats for proper tiling
+		tex.repeat.set(planeSize / 2, planeSize / 2);
 	  });
-	  
-	  // Ensure the texture is fully loaded before applying it to the material
+
 	  texture.onload = function() {
 		const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
 		const planeMat = new THREE.MeshPhongMaterial({
 		  map: texture,
 		  side: THREE.DoubleSide,
-		  transparent: true,  // Enable transparency
-		  opacity: 0.5,        // Set opacity level (0 = fully transparent, 1 = fully opaque)
+		  transparent: true,
+		  opacity: 0.5,
 		});
 		const mesh = new THREE.Mesh(planeGeo, planeMat);
 		mesh.rotation.x = Math.PI * -.5;
@@ -348,14 +307,14 @@ function main() {
 	function updateMaterials() {
 		scene.traverse(function(object) {
 			if (object.material) {
-				object.material.needsUpdate = true; // Force update of materials if needed
+				object.material.needsUpdate = true;
 			}
 		});
 	}
 	
 	{
 		const near = 4;
-		const far = 54; // Adjust based on the size of your scene
+		const far = 54; 
 		const color = 'lightblue';
 		scene.fog = new THREE.Fog(color, near, far);
 		scene.background = new THREE.Color(color);
